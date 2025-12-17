@@ -6,16 +6,10 @@ import os
 import random
 from langdetect import detect, LangDetectException
 
-# ==========================================
-# 1. CONFIGURAÇÃO DA PESQUISA
-# ==========================================
-
 SEARCH_QUERY = "Biden"       
 NUMBER_OF_TWEETS = 100       
 OUTPUT_FILE = "twitter_comments_filtered.csv"
 
-# LISTA EXPANDIDA DE SERVIDORES (Dez 2025)
-# O Twitter bloqueia estes servidores rotativamente. Precisamos de muitos.
 NITTER_INSTANCES = [
     "https://nitter.privacydev.net",
     "https://nitter.bird.gardens.link",
@@ -34,15 +28,9 @@ NITTER_INSTANCES = [
     "https://nitter.lucabased.xyz"
 ]
 
-# Misturar a lista para não sobrecarregar sempre o primeiro
 random.shuffle(NITTER_INSTANCES)
 
-# ==========================================
-# 2. FUNÇÕES UTILITÁRIAS
-# ==========================================
-
 def load_existing_ids(filename):
-    """Lê o CSV e retorna um conjunto com todos os IDs já salvos."""
     existing_ids = set()
     if os.path.exists(filename):
         try:
@@ -56,10 +44,6 @@ def load_existing_ids(filename):
             print(f"AVISO: Não foi possível ler o ficheiro existente: {e}")
     return existing_ids
 
-# ==========================================
-# 3. LÓGICA DE EXTRAÇÃO COM RETRY
-# ==========================================
-
 print("="*50)
 print("   EXTRATOR DE TWEETS (MODO RESILIENTE)")
 print("="*50)
@@ -67,7 +51,6 @@ print("="*50)
 existing_ids = load_existing_ids(OUTPUT_FILE)
 new_data = []
 
-# Inicializa o scraper sem verificação inicial para ser mais rápido
 try:
     scraper = Nitter(log_level=1, skip_instance_check=True)
 except Exception as e:
@@ -83,7 +66,6 @@ for i, instance in enumerate(NITTER_INSTANCES):
     print(f"\n[{i+1}/{len(NITTER_INSTANCES)}] A tentar servidor: {instance}")
     
     try:
-        # Tenta obter os tweets
         tweets_data = scraper.get_tweets(SEARCH_QUERY, mode='term', number=NUMBER_OF_TWEETS, instance=instance)
         
         final_tweets = tweets_data.get('tweets', [])
@@ -125,13 +107,13 @@ for i, instance in enumerate(NITTER_INSTANCES):
             
             print(f"\n     Extraídos {count_processed} tweets válidos deste servidor.")
             success = True
-            break # SAI DO LOOP SE FUNCIONAR
+            break
         else:
             print("     Falha: O servidor devolveu uma lista vazia (provavelmente bloqueado).")
             
     except Exception as e:
         print(f"     Erro de conexão: {e}")
-        time.sleep(1) # Pausa curta antes do próximo
+        time.sleep(1)
 
 if not success:
     print("\n" + "="*50)
@@ -140,9 +122,6 @@ if not success:
     print("Sugestão: Tente novamente amanhã ou foque a sua análise no YouTube/Reddit, que são estáveis.")
     print("="*50)
 else:
-    # ==========================================
-    # 4. GUARDAR DADOS
-    # ==========================================
     print("-" * 50)
     print(f"Total de novos tweets a gravar: {len(new_data)}")
     print("-" * 50)
